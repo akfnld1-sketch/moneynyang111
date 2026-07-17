@@ -646,6 +646,11 @@ function finishWizard(state){
     setTimeout(function(){ showWorkTypeSelector('employee'); }, 200);
     return;
   }
+  // v4.3: 알바도 근무형태(주간/야간/2교대/3교대) 선택 화면 표시 — 온보딩 후 누락되던 문제 수정
+  if(engines.indexOf('alba') >= 0 && typeof showWorkTypeSelector === 'function'){
+    setTimeout(function(){ showWorkTypeSelector('alba_company'); }, 200);
+    return;
+  }
   if(engines.indexOf('salary') >= 0 && typeof showSalarySetupPopup === 'function'){
     setTimeout(function(){ showSalarySetupPopup(); }, 200);
     return;
