@@ -1039,14 +1039,25 @@ function renderAttV3(){
         + (isSel ? 'border:2px solid var(--accent,#4f7cff);' : '');
     }
     var rec = _attV3Rec(d);
-    // v3.9.1: 근태 상태 색상 시스템 — 전 화면 공용 맵 / v1.1: 색+아이콘 이중 표기
+    // v4.3: 파스텔 리뉴얼 — 기록 있는 날은 상태색 칩(흰 숫자)으로 한눈에 구분
     var stKey0 = (typeof mnAttStatusKey==='function') ? mnAttStatusKey(rec) : null;
-    var under = has
-      ? (stKey0
-          ? '<div style="font-size:8px;line-height:1;margin-top:2px;color:'+MN_ATT_COLORS[stKey0]+';">'+MN_ATT_ICONS[stKey0]+'</div>'
-          : '<div style="width:5px;height:5px;border-radius:50%;background:var(--mn-att-work);margin:3px auto 0;"></div>')
-      : (missed ? '<div style="font-size:9px;color:var(--yellow,#ffd166);font-weight:700;margin-top:1px;">기록?</div>'
-                : '<div style="height:8px;"></div>');
+    if(stKey0 && !isT){
+      numStyle = 'width:34px;height:34px;margin:0 auto;border-radius:12px;background:'+MN_ATT_COLORS[stKey0]+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;'
+        + (isSel ? 'box-shadow:0 0 0 2px var(--text,#22315c);' : '');
+    } else if(isT){
+      numStyle = 'width:34px;height:34px;margin:0 auto;border-radius:12px;background:var(--text,#22315c);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 10px rgba(34,49,92,.35);';
+    }
+    var under;
+    if(stKey0){
+      var _ulbl = (typeof MN_ATT_LABELS!=='undefined' && MN_ATT_LABELS[stKey0]) ? MN_ATT_LABELS[stKey0] : '';
+      if(stKey0==='work' || stKey0==='night' || stKey0==='holiday' || stKey0==='late'){
+        try{ var _ue=_attV3DayEarnings(d); if(_ue && _ue.net>0) _ulbl += ' '+_ue.net+'h'; }catch(e){}
+      }
+      under = '<div style="font-size:9px;line-height:1;margin-top:2px;font-weight:900;color:'+MN_ATT_COLORS[stKey0]+';">'+_ulbl+'</div>';
+    } else {
+      under = missed ? '<div style="font-size:9px;color:var(--yellow,#ffd166);font-weight:700;margin-top:1px;">기록?</div>'
+                     : '<div style="height:8px;"></div>';
+    }
     stripCells += '<div data-attv3-day="'+d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()+'" style="cursor:pointer;text-align:center;padding:2px 0;">'
       + '<div style="font-size:11px;color:'+(i===0?'var(--red,#ff5c7a)':(i===6?'var(--accent,#4f7cff)':'var(--text3,#999)'))+';margin-bottom:3px;">'+WD[i]+'</div>'
       + '<div style="'+numStyle+'">'+d.getDate()+'</div>'+under+'</div>';
@@ -1122,6 +1133,12 @@ function renderAttV3(){
     + '<button id="attv3-week-prev" style="background:none;border:none;color:var(--text3,#999);font-size:16px;cursor:pointer;padding:8px;min-width:44px;min-height:44px;">◀</button>'
     + '<div id="attv3-strip" style="flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 2px;">'+stripCells+'</div>'
     + '<button id="attv3-week-next" style="background:none;border:none;color:var(--text3,#999);font-size:16px;cursor:pointer;padding:8px;min-width:44px;min-height:44px;">▶</button>'
+    + '</div>'
+    // v4.3: 상태색 범례 (한눈에 색 구분)
+    + '<div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap;font-size:10.5px;font-weight:700;color:var(--text2,#3a3f55);padding:6px 0 8px;">'
+    + ['work','leave','half','early','absent','night'].map(function(k){
+        return '<span><span style="display:inline-block;width:9px;height:9px;background:'+MN_ATT_COLORS[k]+';border-radius:3px;vertical-align:-1px;margin-right:3px;"></span>'+MN_ATT_LABELS[k]+'</span>';
+      }).join('')
     + '</div>'
     + '<div id="attv3-swipe">'
     // v3.9: 근태 Hero — 홈과 이어지는 캐릭터 안내 (같은 AI가 계속 안내)
