@@ -388,11 +388,26 @@ function _homeHero(){
       }
     }
   }catch(e){}
-  return '<div class="mn-card mn-card--flat mn-fade-in" style="text-align:center;background:none;border:none;padding-bottom:4px;">'
+  // v4.4: 시안 그대로 — 파스텔 블루 그라디언트 + 날짜 + 캐릭터 오른쪽 + D-day 배지
+  var _ddHtml='';
+  try{
+    var _pd=parseInt(localStorage.getItem('atm2_payday'))||0;
+    if(_pd>=1&&_pd<=31){
+      var _t=new Date();
+      var _pp=new Date(_t.getFullYear(),_t.getMonth(),Math.min(_pd,new Date(_t.getFullYear(),_t.getMonth()+1,0).getDate()));
+      if(_pp<=_t)_pp=new Date(_t.getFullYear(),_t.getMonth()+1,Math.min(_pd,new Date(_t.getFullYear(),_t.getMonth()+2,0).getDate()));
+      var _dn=Math.max(0,Math.round((_pp-_t)/86400000));
+      _ddHtml='<div style="display:inline-block;background:#fff;border-radius:99px;font-size:13px;font-weight:700;color:#4f7cff;padding:6px 13px;margin-top:12px;">월급일까지 D-'+_dn+' 🎉</div>';
+    }
+  }catch(e){}
+  var _dt=new Date(), _days=['일','월','화','수','목','금','토'];
+  return '<div class="mn-fade-in" style="background:linear-gradient(160deg,#cfe0ff,#e8f0ff);border-radius:26px;padding:20px;text-align:left;">'
+    + '<div style="font-size:14px;color:#33406b;font-weight:700;">'+(_dt.getMonth()+1)+'월 '+_dt.getDate()+'일 '+_days[_dt.getDay()]+'요일</div>'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-top:6px;">'
+    + '<div style="flex:1;"><div style="font-size:calc(19px * var(--ui-scale,1));font-weight:900;color:#22315c;line-height:1.4;">'+greet+'</div>'
+    + '<div style="font-size:var(--font-base);color:#3a3f55;margin-top:4px;">'+sub+'</div>'+_ddHtml+'</div>'
     + MnCharacter.img(mood, 'lg', { animate:'pop' })
-    + '<div style="font-size:var(--font-md);font-weight:800;color:var(--text);margin-top:8px;">'+greet+'</div>'
-    + '<div style="font-size:var(--font-base);color:var(--text2);margin-top:3px;">'+sub+'</div>'
-    + '</div>';
+    + '</div></div>';
 }
 
 // ② 오늘의 핵심 — 오늘 총 예상수입 + 오늘 총 근무시간 (전 사업장, 공통 계산 함수)
@@ -407,13 +422,15 @@ function _homeTodayCore(){
       if(e){ sumT += e.total||0; sumH += e.net||0; any = true; if(e.isLive) live = true; }
     });
     if(!any) return '';
-    return '<div class="mn-card mn-card--accent">'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">'
-      + '<div><div class="mn-caption">💰 오늘 총 예상수입'+(live?' · 실시간':'')+'</div>'
-      + '<div class="mn-amount" style="color:var(--green);margin-top:2px;">'+_hN(Math.round(sumT))+'</div></div>'
-      + '<div style="border-left:1px solid var(--border);"><div class="mn-caption">⏰ 오늘 총 근무</div>'
-      + '<div class="mn-amount" style="margin-top:2px;">'+(Math.round(sumH*10)/10)+'<span style="font-size:var(--font-base);">시간</span></div></div>'
-      + '</div></div>';
+    // v4.4: 시안의 피치/민트 컴러 카드 2장
+    return '<div style="display:flex;gap:10px;">'
+      + '<div style="flex:1;background:#ffe9d6;border-radius:22px;padding:16px;">'
+      + '<div style="font-size:var(--font-sm,13px);color:#6b4f2a;font-weight:700;">💰 오늘 예상수입'+(live?' · 실시간':'')+'</div>'
+      + '<div style="font-size:calc(19px * var(--ui-scale,1));font-weight:900;color:#5c431f;margin-top:6px;">'+_hN(Math.round(sumT))+'</div></div>'
+      + '<div style="flex:1;background:#d9f3e4;border-radius:22px;padding:16px;">'
+      + '<div style="font-size:var(--font-sm,13px);color:#2c5a42;font-weight:700;">⏰ 오늘 근무</div>'
+      + '<div style="font-size:calc(19px * var(--ui-scale,1));font-weight:900;color:#1e5c3d;margin-top:6px;">'+(Math.round(sumH*10)/10)+'시간</div></div>'
+      + '</div>';
   }catch(e){ return ''; }
 }
 
