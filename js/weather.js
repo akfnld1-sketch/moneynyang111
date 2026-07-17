@@ -724,26 +724,21 @@ function renderHomePage(){
   var todayQuote = HomeQuotes.getToday();
   var briefing= HomeDashboardBuilder.briefing(w, fin, stage, todayQuote ? todayQuote.cat : null);
 
-  // v3.8: AI 비서 대시보드 — 시선 흐름: ①캐릭터 인사 → ②오늘의 핵심 → ③AI 브리핑
-  //       → ④오늘의 한마디 → ⑤빠른 실행 → (날씨/자산/금융/오늘 기록/명언/추천)
+  // v4.3: 파스텔 리뉴얼 — 홈 다이어트: ①히어로 → ②오늘의 핵심 → ③AI 브리핑
+  //       → ④오늘의 한마디 → ⑤출근/퇴근 큰 버튼 + 바로가기 → ⑥날씨
+  //       (금융요약 4셀·최근기록·명언·추천칩은 각 탭과 중복이라 제거)
   var H = '<div class="home-content">';
   H += _homeHero();
   H += _homeTodayCore();
-  H += '<div class="home-card"><div class="home-lbl" style="display:flex;align-items:center;gap:6px;">'
-    +(typeof MnCharacter!=='undefined' ? MnCharacter.img('thinking','avatar') : '')+' AI 브리핑</div>'
+  H += '<div class="home-card" style="border:2px dashed var(--border);"><div class="home-lbl" style="display:flex;align-items:center;gap:6px;">'
+    +(typeof MnCharacter!=='undefined' ? MnCharacter.img('thinking','avatar') : '')+' 냥이의 브리핑</div>'
     +'<div id="home-briefing" class="home-briefing-txt">'+briefing.replace(/\n/g,'<br>')+'</div>'
     +'</div>';
-  // v2.9: SAO Initiative Engine — 오늘의 한마디 (가장 중요한 정보 1개 선제 안내)
+  // v2.9: SAO Initiative Engine — 오늘의 한마디
   if(typeof SaoInitiativeEngine!=='undefined'){ try{ H += SaoInitiativeEngine.bannerHtml(); }catch(e){} }
   H += _hQuick();
   H += '<div id="home-wx-wrap" class="home-wx-wrap home-card">'
     +(wRaw ? WeatherFormatter.full(w) : WeatherFormatter.loading())+'</div>';
-  // 💎 내 자산 카드 (직접 입력, assets.js)
-  if(typeof renderHomeAssetCard==='function') H += renderHomeAssetCard();
-  if(fin.hasRealData) H += _hFinancial(fin);
-  H += _homeRecent();
-  H += HomeQuotes.render();
-  H += _hActions(fin);
   H += '</div>';
   page.innerHTML = H;
 
@@ -893,22 +888,32 @@ function _hQuick(){
   var startClick = "(function(){if(typeof _wsStart==='function'){_wsStart(typeof _wsMainJob==='function'?_wsMainJob():'employee');}else{showPage('att');}})()";
   var endClick = "(function(){if(typeof _wsActive==='function'&&_wsActive()){if(typeof _wsEnd==='function')_wsEnd();}else{showPage('att');}})()";
 
-  var startDim = state!=='idle' ? 'opacity:.4;pointer-events:none;' : '';
-  var endDim = state!=='working' ? 'opacity:.4;pointer-events:none;' : '';
+  var startDim = state!=='idle' ? 'opacity:.45;pointer-events:none;' : '';
+  var endDim = state!=='working' ? 'opacity:.45;pointer-events:none;' : '';
+  var _hm = new Date(); var _now = String(_hm.getHours()).padStart(2,'0')+':'+String(_hm.getMinutes()).padStart(2,'0');
 
-  var btns = [
-    {i:terms.startIcon, l:terms.startLabel, o:startClick, s:startDim},
-    {i:terms.endIcon,   l:terms.endLabel,   o:endClick,   s:endDim},
-    {i:'💰', l:'급여 보기', o:"showPage('sal')", s:''},
-    {i:'🛡️', l:'생존관리',  o:"showPage('budget')", s:''},
-    {i:'🤖', l:'AI 상담',   o:"if(typeof toggleAsst==='function')toggleAsst()", s:''}
-  ];
-  var H = '<div class="home-card"><div class="home-lbl">⚡ 빠른 실행</div><div class="home-quick-grid">';
-  btns.forEach(function(b){
-    H += '<div class="home-quick-btn" style="'+b.s+'" onclick="'+b.o+'">'
-      +'<span class="home-qi">'+b.i+'</span><div class="home-ql">'+b.l+'</div></div>';
-  });
-  return H+'</div></div>';
+  // v4.3: 원터치 출근/퇴근 큰 버튼 (시안: 초록 출근 + 빨간 테두리 퇴근)
+  var H = '<div class="home-card">';
+  H += '<div style="display:flex;gap:10px;">'
+    +'<div onclick="'+startClick+'" style="flex:1;background:var(--green,#2eaf6e);border-radius:18px;padding:18px 0;text-align:center;cursor:pointer;box-shadow:0 6px 16px rgba(46,175,110,.3);'+startDim+'">'
+      +'<div style="font-size:26px;">'+terms.startIcon+'</div>'
+      +'<div style="font-size:17px;font-weight:900;color:#fff;margin-top:4px;">'+terms.startLabel+'</div>'
+      +'<div style="font-size:11.5px;color:rgba(255,255,255,.9);font-weight:700;margin-top:2px;">'+(state==='idle'?'지금 '+_now+' 기록':state==='working'?'근무 중':'오늘 완료')+'</div>'
+    +'</div>'
+    +'<div onclick="'+endClick+'" style="flex:1;background:var(--surface,#fff);border:2px solid var(--red,#e04545);border-radius:18px;padding:16px 0;text-align:center;cursor:pointer;'+endDim+'">'
+      +'<div style="font-size:26px;">'+terms.endIcon+'</div>'
+      +'<div style="font-size:17px;font-weight:900;color:var(--red,#e04545);margin-top:4px;">'+terms.endLabel+'</div>'
+      +'<div style="font-size:11.5px;color:var(--text3);font-weight:700;margin-top:2px;">탭 한번이면 끝</div>'
+    +'</div>'
+  +'</div>';
+  // 바로가기
+  H += '<div class="home-lbl" style="margin-top:14px;">바로가기</div><div class="home-quick-grid">'
+    +'<div class="home-quick-btn" onclick="showPage(\'att\')"><span class="home-qi">🗓️</span><div class="home-ql">근태</div></div>'
+    +'<div class="home-quick-btn" onclick="showPage(\'sal\')"><span class="home-qi">💰</span><div class="home-ql">급여 보기</div></div>'
+    +'<div class="home-quick-btn" onclick="showPage(\'budget\')"><span class="home-qi">🛡️</span><div class="home-ql">생존관리</div></div>'
+    +'<div class="home-quick-btn" onclick="if(typeof toggleAsst===\'function\')toggleAsst()"><span class="home-qi">🤖</span><div class="home-ql">AI 상담</div></div>'
+  +'</div></div>';
+  return H;
 }
 
 var _HOME_ACT_LABELS = {
