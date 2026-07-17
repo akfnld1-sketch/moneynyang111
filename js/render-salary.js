@@ -533,11 +533,17 @@ function _salRedesignTop(){
       const cos = CompanyEngine.companies().filter(c => CompanyEngine.hasRecords(c.wpId, c.empId));
       if(cos.length){
         H += `<div class="mn-h" style="margin-top:2px;">🏢 사업장별 예상급여</div>`;
+        // v4.3: 비중 바 — 사업장별 수입 비율을 색 막대로 한눈에 (투잡·쓰리잡)
+        const _coColors = ['var(--accent,#4f7cff)','#8c52d9','#2eaf6e','#e0862e','#e04545'];
+        const _coPays = cos.map(c => { const p = CompanyEngine.getPayDataFor(c.wpId, c.empId); return p ? (p.finalPay||0) : 0; });
+        const _coSum = _coPays.reduce((a,b)=>a+b,0);
         cos.forEach((c, i) => {
           const pd = CompanyEngine.getPayDataFor(c.wpId, c.empId);
           if(!pd) return;
           const isMain = c.wpId===activeWpId;
           const bid = 'sal-co-body-'+i;
+          const _pct = _coSum>0 ? Math.round((_coPays[i]/_coSum)*100) : 0;
+          const _cc = _coColors[i % _coColors.length];
           H += `<div class="mn-card" style="padding:0;overflow:hidden;">
             <div onclick="_salAccordionToggle('${bid}')" style="display:flex;justify-content:space-between;align-items:center;padding:var(--card-pad);cursor:pointer;">
               <div style="font-size:var(--font-base);font-weight:800;color:var(--text);">${isMain?'🏢':'📦'} ${c.name}
@@ -547,6 +553,10 @@ function _salRedesignTop(){
                 <span id="${bid}-arrow" style="color:var(--text3);transition:transform .2s;">▼</span>
               </div>
             </div>
+            ${cos.length>1 ? `<div style="padding:0 var(--card-pad) 12px;">
+              <div style="height:8px;background:var(--surface2,#f6f0e4);border-radius:99px;overflow:hidden;"><div style="width:${_pct}%;height:8px;background:${_cc};border-radius:99px;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);font-weight:700;margin-top:4px;"><span>전체 수입의</span><span style="color:${_cc};font-weight:900;">${_pct}%</span></div>
+            </div>` : ''}
             <div id="${bid}" style="display:none;padding:0 var(--card-pad) var(--card-pad);border-top:1px solid var(--border);">
               ${_salCompanyDetailRows(pd)}
               ${_salCompareHtml(c, pd, i)}
