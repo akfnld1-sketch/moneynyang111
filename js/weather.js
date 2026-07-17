@@ -729,6 +729,8 @@ function renderHomePage(){
   //       (금융요약 4셀·최근기록·명언·추천칩은 각 탭과 중복이라 제거)
   var H = '<div class="home-content">';
   H += _homeHero();
+  H += '<div id="home-wx-wrap" class="home-wx-wrap home-card">'
+    +(wRaw ? WeatherFormatter.full(w) : WeatherFormatter.loading())+'</div>';
   H += _homeTodayCore();
   H += '<div class="home-card" style="border:2px dashed var(--border);"><div class="home-lbl" style="display:flex;align-items:center;gap:6px;">'
     +(typeof MnCharacter!=='undefined' ? MnCharacter.img('thinking','avatar') : '')+' 냥이의 브리핑</div>'
@@ -738,8 +740,6 @@ function renderHomePage(){
   if(typeof SaoInitiativeEngine!=='undefined'){ try{ H += SaoInitiativeEngine.bannerHtml(); }catch(e){} }
   H += _hQuick();
   H += '<div id="home-news"></div>';
-  H += '<div id="home-wx-wrap" class="home-wx-wrap home-card">'
-    +(wRaw ? WeatherFormatter.full(w) : WeatherFormatter.loading())+'</div>';
   H += '</div>';
   page.innerHTML = H;
 
