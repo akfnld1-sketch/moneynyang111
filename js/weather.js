@@ -737,10 +737,14 @@ function renderHomePage(){
   // v2.9: SAO Initiative Engine — 오늘의 한마디
   if(typeof SaoInitiativeEngine!=='undefined'){ try{ H += SaoInitiativeEngine.bannerHtml(); }catch(e){} }
   H += _hQuick();
+  H += '<div id="home-news"></div>';
   H += '<div id="home-wx-wrap" class="home-wx-wrap home-card">'
     +(wRaw ? WeatherFormatter.full(w) : WeatherFormatter.loading())+'</div>';
   H += '</div>';
   page.innerHTML = H;
+
+  // v4.3: 오늘의 머니 뉴스 (news.json — 저장소에서 직접 관리, 탭하면 기사 링크)
+  _homeLoadNews();
 
   // 날씨 비동기 로드 (캐시 미스 시에만)
   if(!wRaw){
@@ -880,6 +884,34 @@ function _hQuickTerms(){
   if(jobs.some(function(j){ return ['convenience','shortAlba'].indexOf(j)>=0; }))
     return {startIcon:'📋', startLabel:'출근하기', endIcon:'🌙', endLabel:'퇴근하기'};
   return {startIcon:'📋', startLabel:'시작하기', endIcon:'🏁', endLabel:'종료하기'};
+}
+
+// v4.3: 뉴스 카드 — news.json fetch 후 렌더 (실패 시 카드 숨김, 결과 1시간 캐시)
+var _homeNewsCache = null;
+function _homeLoadNews(){
+  var host = document.getElementById('home-news');
+  if(!host) return;
+  function paint(data){
+    try{
+      var items = (data && data.items) || [];
+      if(!items.length){ host.innerHTML=''; return; }
+      var tagBg = { '노동':'rgba(79,124,255,.14)', '지원금':'rgba(46,175,110,.14)', '금융':'rgba(224,134,46,.14)' };
+      var tagCo = { '노동':'var(--accent,#4f7cff)', '지원금':'var(--green,#2eaf6e)', '금융':'var(--orange,#e0862e)' };
+      var rows = items.slice(0,3).map(function(it){
+        return '<div onclick="window.open(\''+(it.url||'#')+'\',\'_blank\')" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:7px 0;">'
+          + '<span style="background:'+(tagBg[it.tag]||'var(--surface2)')+';color:'+(tagCo[it.tag]||'var(--text2)')+';font-size:11px;font-weight:900;padding:3px 9px;border-radius:99px;flex-shrink:0;margin-top:1px;">'+(it.tag||'소식')+'</span>'
+          + '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.45;">'+it.title+'</div>'
+          + (it.sub?'<div style="font-size:12px;color:var(--text3);font-weight:600;margin-top:2px;">'+it.sub+'</div>':'')+'</div>'
+          + '<span style="color:var(--text3);flex-shrink:0;margin-top:2px;">›</span></div>';
+      }).join('');
+      host.innerHTML = '<div class="home-card"><div class="home-lbl">📰 오늘의 머니 뉴스</div>'+rows+'</div>';
+    }catch(e){ host.innerHTML=''; }
+  }
+  if(_homeNewsCache){ paint(_homeNewsCache); return; }
+  fetch('news.json?t='+Math.floor(Date.now()/3600000))
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if(d){ _homeNewsCache = d; paint(d); } })
+    .catch(function(){ /* 오프라인/실패 시 카드 생략 */ });
 }
 
 function _hQuick(){
