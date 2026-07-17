@@ -98,6 +98,46 @@
   background:rgba(79,124,255,.10);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   홈 화면 — 시안(머니냥 홈 v2) 그대로: 파스텔 히어로 + 컬러 타일
+   ══════════════════════════════════════════════════════════════ */
+/* 히어로(냥이 인사): 파스텔 블루 그라디언트 카드 (시안 cfe0ff→e8f0ff) */
+:root:not([data-theme="dark"]) .home-content > .mn-card--flat.mn-fade-in:first-child{
+  background:linear-gradient(160deg,#cfe0ff,#e8f0ff) !important;
+  border:none !important;
+  border-radius:26px;
+  padding:20px 16px 18px !important;
+  margin-bottom:12px;
+}
+/* 홈 카드: 시안의 22px 라운드 + 부드러운 그림자 */
+:root:not([data-theme="dark"]) .home-card{
+  border-radius:22px;
+  border:none;
+  box-shadow:0 2px 10px rgba(120,90,40,.08);
+}
+/* 바로가기 타일: 시안의 컬러 타일 4색 (피치/블루/퍼플/민트) */
+:root:not([data-theme="dark"]) .home-quick-btn{ border-radius:16px; border:none; }
+:root:not([data-theme="dark"]) .home-quick-btn:nth-child(1){ background:#ffe9d6; }
+:root:not([data-theme="dark"]) .home-quick-btn:nth-child(2){ background:#e0ebff; }
+:root:not([data-theme="dark"]) .home-quick-btn:nth-child(3){ background:#d9f3e4; }
+:root:not([data-theme="dark"]) .home-quick-btn:nth-child(4){ background:#f0e4ff; }
+:root:not([data-theme="dark"]) .home-ql{ color:#3a3f55; font-weight:700; }
+/* 추천/둘러보기 칩: 시안의 흰 알약 배지 */
+:root:not([data-theme="dark"]) .home-act-chip{
+  background:#fff;
+  border:1px solid #e0ebff;
+  color:#4f7cff;
+  font-weight:700;
+  border-radius:99px;
+  box-shadow:0 1px 4px rgba(120,90,40,.06);
+}
+/* 오늘의 핵심 카드: 파스텔 민트 포인트 */
+:root:not([data-theme="dark"]) .mn-card--accent{
+  background:#f2fbf6;
+  border:none;
+  border-radius:22px;
+}
+
 /* ── 캐릭터 말풍선: 점선 크림 테두리 (시안 브리핑 카드) ── */
 :root:not([data-theme="dark"]) .mn-char-bubble{
   border:2px dashed #e3d7c3;
