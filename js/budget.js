@@ -1086,6 +1086,24 @@ function _bdgSurvivalHero(zb, incTotal, hasIncomeData, totalExpense, remain){
       <div><div class="mn-caption">남은 금액</div><b style="font-size:var(--font-sm);color:${remain>=0?'var(--mn-success)':'var(--mn-error)'};">${hasIncomeData?fmt(remain):'—'}</b></div>
     </div></div>`;
 
+    // ③-2 v4.3 파스텔 리뉴얼 — 월급일까지 하루 사용 가능액 (잔액 ÷ D-day)
+    if(!nodata && zb.currentBalance > 0){
+      let _pd = 0; try{ _pd = parseInt(localStorage.getItem('atm2_payday'))||0; }catch(e){}
+      if(_pd>=1 && _pd<=31){
+        const _t = new Date();
+        let _pdate = new Date(_t.getFullYear(), _t.getMonth(), Math.min(_pd, new Date(_t.getFullYear(),_t.getMonth()+1,0).getDate()));
+        if(_pdate <= _t) _pdate = new Date(_t.getFullYear(), _t.getMonth()+1, Math.min(_pd, new Date(_t.getFullYear(),_t.getMonth()+2,0).getDate()));
+        const _dd = Math.max(1, Math.round((_pdate - _t)/86400000));
+        const _perDay = Math.floor(zb.currentBalance / _dd);
+        const _paceOk = !(zb.avgDailySpend > 0) || zb.avgDailySpend <= _perDay;
+        H += `<div class="mn-card" style="text-align:center;background:${_paceOk?'var(--mn-good-soft)':'var(--mn-warn-soft)'};border:none;">
+          <div class="mn-caption">💸 월급일(D-${_dd})까지 하루에</div>
+          <div style="font-size:calc(26px * var(--ui-scale));font-weight:900;font-family:'JetBrains Mono';color:${_paceOk?'var(--mn-success)':'var(--mn-warning)'};margin-top:2px;">${fmt(_perDay)}</div>
+          <div class="mn-caption" style="margin-top:3px;">잔액 ${fmt(zb.currentBalance)} ÷ ${_dd}일${zb.avgDailySpend>0?` · 현재 페이스 하루 ${fmt(zb.avgDailySpend)} ${_paceOk?'👍':'⚠️'}`:''}</div>
+        </div>`;
+      }
+    }
+
     // ④ 버틸 수 있는 날짜
     if(!nodata && zb.daysLeft !== null && zb.daysLeft !== undefined){
       const ok = zb.daysLeft > 0;
