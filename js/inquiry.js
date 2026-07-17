@@ -71,6 +71,11 @@ InquiryAPI.setBackend(InquiryHttpBackend);
 
 // ── 이메일 전송 (EmailJS) ──
 function _inqSendEmail(inquiry){
+  // 실패 시 재전송 큐에 보관 (로컬 저장은 이미 성공)
+  return _inqSendEmailRaw(inquiry).catch(function(){ _inqQueuePending(inquiry); });
+}
+
+function _inqSendEmailRaw(inquiry){
   if(typeof emailjs === 'undefined' || EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') return Promise.resolve();
   var catLabel = INQUIRY_CATEGORIES.filter(function(c){ return c.v === inquiry.category; })[0];
   var dev = inquiry.deviceInfo || {};
@@ -79,6 +84,8 @@ function _inqSendEmail(inquiry){
     category:      catLabel ? catLabel.l : inquiry.category,
     title:         inquiry.title,
     content:       inquiry.content,
+    reply_email:   inquiry.email || '',
+    email:         inquiry.email || '',
     app_version:   inquiry.appVersion,
     os:            dev.os || '',
     browser:       dev.browser || '',
@@ -90,9 +97,34 @@ function _inqSendEmail(inquiry){
     image_count:   (inquiry.images||[]).length + '장',
     user_id:       inquiry.userId
   };
-  return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, templateParams)
-    .catch(function(){ /* 이메일 실패해도 로컬 저장은 성공 — 무시 */ });
+  return emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, templateParams);
 }
+
+// ── 이메일 전송 실패 재전송 큐 ──
+function _inqQueuePending(inquiry){
+  try{
+    var q = JSON.parse(localStorage.getItem('inq_pending')||'[]');
+    var slim = JSON.parse(JSON.stringify(inquiry)); slim.images = [];
+    q.push(slim);
+    localStorage.setItem('inq_pending', JSON.stringify(q.slice(-10)));
+  }catch(e){}
+}
+function _inqFlushPending(){
+  if(!navigator.onLine) return;
+  var q;
+  try{ q = JSON.parse(localStorage.getItem('inq_pending')||'[]'); }catch(e){ q = []; }
+  if(!q.length) return;
+  _inqSendEmailRaw(q[0]).then(function(){
+    try{
+      var q2 = JSON.parse(localStorage.getItem('inq_pending')||'[]');
+      q2.shift();
+      localStorage.setItem('inq_pending', JSON.stringify(q2));
+    }catch(e){}
+    _inqFlushPending();
+  }).catch(function(){});
+}
+window.addEventListener('online', _inqFlushPending);
+setTimeout(_inqFlushPending, 3000);
 
 var InquiryAPI = (function(){
   var _backend = InquiryLocalBackend;
@@ -105,6 +137,7 @@ var InquiryAPI = (function(){
         category: data.category,
         title: data.title,
         content: data.content,
+        email: data.email || '',
         images: data.images || [],
         status: 'pending',
         answer: null,
@@ -241,6 +274,9 @@ function showInquiryPopup(){
     + '<textarea id="inq-content" rows="5" placeholder="어떤 상황에서 어떤 문제가 있었는지 적어주시면 더 빠르게 해결할 수 있어요" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.15));background:var(--bg,#161927);color:var(--text,#eee);font-size:15px;line-height:1.6;font-family:\'Noto Sans KR\',sans-serif;margin-bottom:4px;box-sizing:border-box;resize:vertical;"></textarea>'
     + '<div id="inq-count" style="font-size:12px;color:var(--text3,#999);text-align:right;margin-bottom:14px;">0자</div>'
 
+    + '<label style="display:block;font-size:14px;font-weight:700;color:var(--text2,#b8bdd4);margin-bottom:6px;">답변 받을 이메일 <span style="font-weight:400;color:var(--text3,#999);">(선택)</span></label>'
+    + '<input id="inq-email" type="email" maxlength="80" placeholder="답변이 필요하면 이메일을 남겨주세요" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.15));background:var(--bg,#161927);color:var(--text,#eee);font-size:15px;font-family:\'Noto Sans KR\',sans-serif;margin-bottom:14px;box-sizing:border-box;">'
+
     + '<label style="display:block;font-size:14px;font-weight:700;color:var(--text2,#b8bdd4);margin-bottom:6px;">사진 첨부 <span style="font-weight:400;color:var(--text3,#999);">(최대 3장, 선택)</span></label>'
     + '<div id="inq-thumbs" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;"></div>'
     + '<button id="inq-attach" style="padding:10px 16px;border-radius:10px;border:1px dashed var(--border,rgba(255,255,255,.25));background:none;color:var(--text2,#b8bdd4);font-size:14px;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;margin-bottom:16px;min-height:44px;">📷 사진 선택</button>'
@@ -292,13 +328,20 @@ function showInquiryPopup(){
     var title = document.getElementById('inq-title').value.trim();
     var content = contentEl.value.trim();
     var category = document.getElementById('inq-category').value;
+    var email = (document.getElementById('inq-email').value || '').trim();
     if(!title){ if(typeof showToast==='function') showToast('제목을 입력해주세요'); document.getElementById('inq-title').focus(); return; }
     if(content.length < 10){ if(typeof showToast==='function') showToast('문의 내용을 10자 이상 적어주세요'); contentEl.focus(); return; }
+    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ if(typeof showToast==='function') showToast('이메일 형식을 확인해주세요'); document.getElementById('inq-email').focus(); return; }
+
+    // 연속 제출 방지 (60초)
+    var lastAt = parseInt(localStorage.getItem('inq_last_submit')||'0', 10);
+    if(Date.now() - lastAt < 60000){ if(typeof showToast==='function') showToast('잠시 후 다시 시도해주세요'); return; }
 
     var btn = document.getElementById('inq-submit');
     btn.disabled = true; btn.textContent = '전송 중...';
 
-    InquiryAPI.submit({ category:category, title:title, content:content, images:_inqImages })
+    InquiryAPI.submit({ category:category, title:title, content:content, email:email, images:_inqImages })
+      .then(function(){ localStorage.setItem('inq_last_submit', String(Date.now())); })
       .then(function(){ _inqShowSuccess(overlay); })
       .catch(function(){
         btn.disabled = false; btn.textContent = '문의 보내기';
