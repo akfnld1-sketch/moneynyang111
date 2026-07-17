@@ -1,4 +1,28 @@
 /* ══════════════════════════════════════════════════════════════
+   PC 홈 레이아웃 (1025px+) — 모바일 카드 나열을 2단 그리드로 재배치
+   왼쪽: 인사(전체폭) → 날씨·핵심·브리핑 / 오른쪽: 출퇴근+바로가기·한마디
+   뉴스는 하단 전체폭. 태블릿 이하(1024px-)는 기존 세로 나열 유지.
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .home-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+    grid-auto-flow: dense;
+  }
+  .home-content > * { margin: 0 !important; }
+  /* 인사(캐릭터) — 전체 폭 */
+  .home-content > .mn-fade-in:first-child { grid-column: 1 / -1; padding-bottom: 0 !important; }
+  /* 뉴스 — 하단 전체 폭 */
+  .home-content > #home-news { grid-column: 1 / -1; }
+  /* 카드 내부 여백을 살짝 넉넉하게 */
+  .home-content > .home-card { padding: 20px 22px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
    머니냥 파스텔 테마 v1.0 (theme-pastel.css)
    — 2026-07 디자인 리뉴얼 (머니냥 홈 v2 시안 기반)
    원칙: add-only 오버라이드. main.css/design-system.css 뒤에 로드.
