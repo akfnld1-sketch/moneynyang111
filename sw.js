@@ -7,7 +7,7 @@
 
 // ★ Fix #70: 근태관리 히어로카드에 생존관리로 이어지는 질문형 문구 추가
 //   ("이 돈으로 다음 월급날까지 버틸 수 있을까요?") — 기능 변경 없음 (2026-06-22)
-const CACHE_NAME = 'moneynyang-v1-cache-v232';
+const CACHE_NAME = 'moneynyang-v1-cache-v233';
 
 // ── 로컬 파일 (분리된 CSS/JS 전체) ──
 // ★ index.html의 <script>/<link> 태그와 쿼리스트링이 항상 일치해야 함 (불일치 시 사전 캐시 무의미)
@@ -16,6 +16,7 @@ const LOCAL_RESOURCES = [
   './index.html',
   './manifest.json',
   './css/main.css?v=20260712a',
+  './css/theme-pastel.css?v=20260717a',
   './css/design-system.css?v=20260710f',
   './css/mobile.css?v=20260705a',
   './img/icons/app-icon-192.png',
@@ -52,7 +53,7 @@ const LOCAL_RESOURCES = [
   './img/login-bg.jpg',
   './js/quotes-data.js?v=20260701l',
   './js/assets.js?v=20260702a',
-  './js/weather.js?v=20260710e',
+  './js/weather.js?v=20260717a',
   './js/sao-engine.js?v=20260710a',
   './js/sao-initiative.js?v=20260710d',
   './js/tutorial.js?v=20260704c',
